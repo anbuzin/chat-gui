@@ -107,14 +107,16 @@ const mockMessages = [
 
 export function Chat() {
   return (
-    <div className="flex flex-col h-auto">
-      <ScrollArea className="h-auto">
-        {mockMessages.map((message) => (
-          <div key={message.id} className="p-2">
-            <p>{message.content}</p>
-          </div>
-        ))}
-      </ScrollArea>
+    <div className="flex flex-col">
+      <div className="flex-1">
+        <ScrollArea className="h-full">
+          {mockMessages.map((message) => (
+            <div key={message.id} className="p-2">
+              <p>{message.content}</p>
+            </div>
+          ))}
+        </ScrollArea>
+      </div>
       <div className="sticky bottom-0 bg-background/50 backdrop-blur-sm border-t p-4">
         <Input placeholder="Type a message..." />
       </div>
