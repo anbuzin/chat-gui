@@ -1,4 +1,5 @@
 import Markdown from "react-markdown";
+import reactGfm from "remark-gfm";
 import { cn } from "@/lib/utils";
 
 export type Message = {
@@ -23,7 +24,7 @@ export function MessageContainer({ message }: { message: Message }) {
             : "prose bg-secondary text-secondary-foreground self-start"
         )}
       >
-        <Markdown>{message.body}</Markdown>
+        <Markdown remarkPlugins={[reactGfm]}>{message.body}</Markdown>
       </div>
     </div>
   );
