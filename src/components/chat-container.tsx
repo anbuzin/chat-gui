@@ -1,6 +1,6 @@
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { MessageItem } from "@/components/message-item";
+import { MessageContainer } from "@/components/message-container";
 import { mockMessages } from "@/app/mock-chats";
 
 
@@ -11,7 +11,7 @@ export function ChatContainer() {
         <ScrollArea className="h-full">
           <div className="flex flex-col gap-4">
             {mockMessages.map((message) => (
-              <MessageItem key={message.id} message={message} />
+              <MessageContainer key={message.id} message={message} />
             ))}
           </div>
         </ScrollArea>

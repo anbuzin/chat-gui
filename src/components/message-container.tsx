@@ -6,11 +6,11 @@ export type Message = {
     body: string;
     created_at: string;
     chatId: string;
-    evicted: boolean;
+    evicted?: boolean;
     thinking?: string;
 }
 
-export function MessageItem({ message }: { message: Message }) {
+export function MessageContainer({ message }: { message: Message }) {
     return (
         <div key={message.id} className={cn("flex flex-col w-full")}>
             <div
