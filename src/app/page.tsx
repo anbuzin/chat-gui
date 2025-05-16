@@ -1,9 +1,9 @@
-import { Chat } from "@/components/chat";
+import { ChatContainer } from "@/components/chat";
 
 export default function Home() {
   return (
     <main className="flex h-screen bg-background">
-      <Chat />
+      <ChatContainer />
     </main>
   );
 }
