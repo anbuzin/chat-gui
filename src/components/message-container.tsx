@@ -15,16 +15,20 @@ export type Message = {
 export function MessageContainer({ message }: { message: Message }) {
   const isUser = message.llm_role === "user";
   return (
+    <div
+      className={cn("w-full flex", isUser ? "justify-end" : "justify-start")}
+    >
       <div
         key={message.id}
         className={cn(
-          "prose rounded-lg p-4",
+          "flex flex-col prose rounded-lg p-4",
           isUser
-            ? "bg-primary text-primary-foreground self-end"
-            : "bg-secondary text-secondary-foreground"
+            ? "bg-primary text-primary-foreground"
+            : "bg-secondary text-secondary-foreground w-full max-w-none"
         )}
       >
-        <Markdown remarkPlugins={[reactGfm]} >{message.body}</Markdown>
+        <Markdown remarkPlugins={[reactGfm]}>{message.body}</Markdown>
       </div>
+    </div>
   );
 }

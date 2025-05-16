@@ -5,18 +5,12 @@ import { mockMessages } from "@/app/mock-chats";
 
 export function ChatContainer() {
   return (
-    <div>
-      <ScrollArea>
-        <div className="flex flex-col gap-4 w-dvw">
-          {mockMessages.map((message) => (
-            <MessageContainer key={message.id} message={message} />
-          ))}
-        </div>
-      </ScrollArea>
-      <Input
-        className="sticky bottom-0 bg-background/50 backdrop-blur-sm border-t p-4"
-        placeholder="Type a message..."
-      />
+    <div className="w-full">
+      <div className="overflow-y-auto flex flex-col gap-4 w-full">
+        {mockMessages.map((message) => (
+          <MessageContainer key={message.id} message={message} />
+        ))}
+      </div>
     </div>
   );
 }
