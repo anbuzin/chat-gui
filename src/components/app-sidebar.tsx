@@ -21,7 +21,7 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {mockChats.map((item) => (
-                <SidebarMenuItem key={item.title}>
+                <SidebarMenuItem key={item.id}>
                   <SidebarMenuButton asChild>
                     <Link href={`/chat/${item.id}`}>
                       <span>{item.title}</span>
