@@ -9,7 +9,6 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
 } from "@/components/ui/sidebar";
-import { Plus } from "lucide-react";
 import Link from "next/link";
 import { mockChats } from "@/app/mock-chats";
 import { Button } from "./ui/button";
