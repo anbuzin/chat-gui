@@ -5,6 +5,10 @@ import asyncio
 import json
 from typing import List
 from pydantic import BaseModel
+import gel
+
+
+gel_client = gel.create_async_client()
 
 app = FastAPI()
 
@@ -26,8 +30,6 @@ class ChatRequest(BaseModel):
     messages: List[ClientMessage]
 
 
-MOCK_TEXT_RESPONSE = "This is a mock response from the server. It simulates what a real AI would return. The streaming functionality is working correctly!"
-
 MOCK_TOOL_CALL_RESPONSE = {
     "id": "call_123456789",
     "name": "get_current_weather",
@@ -40,8 +42,10 @@ MOCK_TOOL_RESULT = {"temperature": 72, "unit": "fahrenheit", "description": "Sun
 @app.post("/api/chat")
 async def chat(request: ChatRequest):
     async def generate_stream():
+        response = await gel_client.query("select Message.content limit 1")
+
         # Stream the text content first
-        words = MOCK_TEXT_RESPONSE.split()
+        words = response[0].split()
         for i, word in enumerate(words):
             yield f'0:"{word} "\n'
             await asyncio.sleep(0.1)
@@ -73,14 +77,15 @@ async def chat(request: ChatRequest):
     return response
 
 
-# Keep the original stream endpoint for compatibility
-@app.get("/api/stream")
-async def stream_response():
-    async def generate_stream():
-        for chunk in MOCK_TEXT_RESPONSE.split(" "):
-            yield f"data: {chunk}\n\n"
-            await asyncio.sleep(0.05)
+# # Keep the original stream endpoint for compatibility
+# @app.get("/api/stream")
+# async def stream_response():
+#     async def generate_stream():
+#         response = await gel_client.query("select Message.content limit 1")
+#         for chunk in response[0].split(" "):
+#             yield f"data: {chunk}\n\n"
+#             await asyncio.sleep(0.05)
 
-        yield "data: [DONE]\n\n"
+#         yield "data: [DONE]\n\n"
 
-    return StreamingResponse(generate_stream(), media_type="text/event-stream")
+#     return StreamingResponse(generate_stream(), media_type="text/event-stream")

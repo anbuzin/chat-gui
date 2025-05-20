@@ -1,0 +1,9 @@
+module default {
+    type Message {
+        llm_role: str;
+        content: str;
+        created_at: datetime {
+            default:= datetime_current();
+        };
+    }
+}
