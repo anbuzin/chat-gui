@@ -3,12 +3,16 @@ from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 import asyncio
 import json
+import os
 from typing import List
 from pydantic import BaseModel
 import gel
 
 
-gel_client = gel.create_async_client()
+DEPLOYMENT_URL = os.getenv("VERCEL_URL") or "http://localhost:3000"
+
+gel_base_client = gel.create_async_client()
+gel_client = gel_base_client.with_globals({"backend_url": f"{DEPLOYMENT_URL}"})
 
 app = FastAPI()
 
@@ -37,6 +41,17 @@ MOCK_TOOL_CALL_RESPONSE = {
 }
 
 MOCK_TOOL_RESULT = {"temperature": 72, "unit": "fahrenheit", "description": "Sunny"}
+
+
+class FooRequest(BaseModel):
+    chat_id: str
+    content: str
+    llm_role: str
+
+
+@app.post("/api/agent/foo")
+async def foo(request: FooRequest):
+    return {"message": "Hello, world!"}
 
 
 @app.post("/api/chat")
@@ -75,17 +90,3 @@ async def chat(request: ChatRequest):
     response = StreamingResponse(generate_stream())
     response.headers["x-vercel-ai-data-stream"] = "v1"
     return response
-
-
-# # Keep the original stream endpoint for compatibility
-# @app.get("/api/stream")
-# async def stream_response():
-#     async def generate_stream():
-#         response = await gel_client.query("select Message.content limit 1")
-#         for chunk in response[0].split(" "):
-#             yield f"data: {chunk}\n\n"
-#             await asyncio.sleep(0.05)
-
-#         yield "data: [DONE]\n\n"
-
-#     return StreamingResponse(generate_stream(), media_type="text/event-stream")

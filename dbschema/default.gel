@@ -1,9 +1,34 @@
 module default {
+
+    global backend_url: str {
+        default:= "http://localhost:8000";
+    }
+
     type Message {
         llm_role: str;
         content: str;
         created_at: datetime {
             default:= datetime_current();
         };
+
+        trigger post_foo after insert, update for each do (
+            with endpoint := assert_exists(global backend_url) ++ "/api/agent/foo"
+            select net::http::schedule_request(
+                endpoint,
+                method := net::http::Method.POST,
+                headers := [('Content-Type', 'application/json')],
+                body := to_bytes(
+                    to_str(
+                        json_object_pack(
+                            {
+                                ("chat_id", <json>__new__.id),
+                                ("content", <json>__new__.content),
+                                ("llm_role", <json>__new__.llm_role)
+                            }
+                        )
+                    )
+                )
+            )
+        );
     }
 }
