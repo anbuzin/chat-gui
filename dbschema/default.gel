@@ -4,6 +4,10 @@ module default {
         default:= "http://localhost:8000";
     }
 
+    global vercel_bypass: str {
+        default:= "";
+    }
+
     type Message {
         llm_role: str;
         content: str;
@@ -12,11 +16,16 @@ module default {
         };
 
         trigger post_foo after insert, update for each do (
-            with endpoint := assert_exists(global backend_url) ++ "/api/agent/foo"
+            with 
+                endpoint := assert_exists(global backend_url) ++ "/api/agent/foo",
+                headers := [
+                    ('x-vercel-automation-bypass', assert_exists(global vercel_bypass)),
+                    ('Content-Type', 'application/json')
+                ],
             select net::http::schedule_request(
                 endpoint,
                 method := net::http::Method.POST,
-                headers := [('Content-Type', 'application/json')],
+                headers := headers,
                 body := to_bytes(
                     to_str(
                         json_object_pack(

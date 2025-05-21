@@ -10,9 +10,13 @@ import gel
 
 
 DEPLOYMENT_URL = f"https://{os.getenv('VERCEL_URL')}" or "http://localhost:3000"
+VERCEL_BYPASS = os.getenv("VERCEL_AUTOMATION_BYPASS_SECRET") or ""
+
 
 gel_base_client = gel.create_async_client()
-gel_client = gel_base_client.with_globals({"backend_url": f"{DEPLOYMENT_URL}"})
+gel_client = gel_base_client.with_globals(
+    {"backend_url": f"{DEPLOYMENT_URL}", "vercel_bypass": f"{VERCEL_BYPASS}"}
+)
 
 app = FastAPI()
 
