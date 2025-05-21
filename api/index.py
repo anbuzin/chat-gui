@@ -57,7 +57,14 @@ async def foo(request: FooRequest):
 @app.post("/api/chat")
 async def chat(request: ChatRequest):
     async def generate_stream():
-        response = await gel_client.query("select Message.content limit 1")
+        await gel_client.query(
+            "insert Message {llm_role := <str>$llm_role, content := <str>$content}",
+            llm_role=request.messages[-1].role,
+            content=f"deployment_url: {DEPLOYMENT_URL}\n{request.messages[-1].content}",
+        )
+        response = await gel_client.query(
+            "select Message.content order by Message.created_at desc limit 1"
+        )
 
         # Stream the text content first
         words = response[0].split()
