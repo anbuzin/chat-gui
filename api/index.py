@@ -9,7 +9,7 @@ from pydantic import BaseModel
 import gel
 
 
-DEPLOYMENT_URL = os.getenv("VERCEL_URL") or "http://localhost:3000"
+DEPLOYMENT_URL = f"https://{os.getenv('VERCEL_URL')}" or "http://localhost:3000"
 
 gel_base_client = gel.create_async_client()
 gel_client = gel_base_client.with_globals({"backend_url": f"{DEPLOYMENT_URL}"})
