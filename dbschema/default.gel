@@ -19,7 +19,7 @@ module default {
             with 
                 endpoint := assert_exists(global backend_url) ++ "/api/agent/foo",
                 headers := [
-                    ('x-vercel-automation-bypass', assert_exists(global vercel_bypass)),
+                    ('x-vercel-protection-bypass', assert_exists(global vercel_bypass)),
                     ('Content-Type', 'application/json')
                 ],
             select net::http::schedule_request(
