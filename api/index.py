@@ -2,11 +2,11 @@ from fastapi import FastAPI
 from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 import asyncio
-import json
 import os
-from typing import List
+import uuid
 from pydantic import BaseModel
 import gel
+from common.types import Message, ChatInfo
 
 
 DEPLOYMENT_URL = f"https://{os.getenv('VERCEL_URL')}" or "http://localhost:3000"
@@ -29,24 +29,6 @@ app.add_middleware(
 )
 
 
-class ClientMessage(BaseModel):
-    role: str
-    content: str
-
-
-class ChatRequest(BaseModel):
-    messages: List[ClientMessage]
-
-
-MOCK_TOOL_CALL_RESPONSE = {
-    "id": "call_123456789",
-    "name": "get_current_weather",
-    "arguments": '{"latitude": 40.7128, "longitude": -74.0060}',
-}
-
-MOCK_TOOL_RESULT = {"temperature": 72, "unit": "fahrenheit", "description": "Sunny"}
-
-
 class FooRequest(BaseModel):
     chat_id: str
     content: str
@@ -58,46 +40,50 @@ async def foo(request: FooRequest):
     return {"message": "Hello, world!"}
 
 
-@app.post("/api/chat")
-async def chat(request: ChatRequest):
+class FetchChatResponse(BaseModel):
+    messages: list[Message]
+
+
+@app.get("/api/chat/{chat_id}")
+async def fetch_chat(chat_id: uuid.UUID) -> FetchChatResponse:
+    return FetchChatResponse(messages=[])
+
+
+class ListChatsResponse(BaseModel):
+    chats: list[ChatInfo]
+
+
+@app.get("/api/chat")
+async def list_chats() -> ListChatsResponse:
+    return ListChatsResponse(chats=[])
+
+
+class AddMessageRequest(BaseModel):
+    messages: list[Message]
+
+
+@app.post("/api/chat/{chat_id}")
+async def add_message(
+    chat_id: uuid.UUID, request: AddMessageRequest
+) -> StreamingResponse:
     async def generate_stream():
-        await gel_client.query(
-            "insert Message {llm_role := <str>$llm_role, content := <str>$content}",
-            llm_role=request.messages[-1].role,
-            content=f"deployment_url: {DEPLOYMENT_URL}\n{request.messages[-1].content}",
-        )
-        response = await gel_client.query(
-            "select Message.content order by Message.created_at desc limit 1"
-        )
+        for message in request.messages:
+            words = message.content.split()
+            for i, word in enumerate(words):
+                yield f'0:"{word} "\n'
+                await asyncio.sleep(0.1)
 
-        # Stream the text content first
-        words = response[0].split()
-        for i, word in enumerate(words):
-            yield f'0:"{word} "\n'
-            await asyncio.sleep(0.1)
-
-        # Optional: simulate a tool call after text
-        if len(words) > 5:  # Just a condition to sometimes include tool calls
-            # Send tool call
-            yield '9:{{"toolCallId":"{id}","toolName":"{name}","args":{args}}}\n'.format(
-                id=MOCK_TOOL_CALL_RESPONSE["id"],
-                name=MOCK_TOOL_CALL_RESPONSE["name"],
-                args=MOCK_TOOL_CALL_RESPONSE["arguments"],
-            )
-
-            await asyncio.sleep(0.3)
-
-            # Send tool result
-            yield 'a:{{"toolCallId":"{id}","toolName":"{name}","args":{args},"result":{result}}}\n'.format(
-                id=MOCK_TOOL_CALL_RESPONSE["id"],
-                name=MOCK_TOOL_CALL_RESPONSE["name"],
-                args=MOCK_TOOL_CALL_RESPONSE["arguments"],
-                result=json.dumps(MOCK_TOOL_RESULT),
-            )
-
-        # End stream with finish reason and usage info
         yield 'e:{{"finishReason":"stop","usage":{{"promptTokens":15,"completionTokens":25}},"isContinued":false}}\n'
 
     response = StreamingResponse(generate_stream())
     response.headers["x-vercel-ai-data-stream"] = "v1"
     return response
+
+
+class CreateChatResponse(BaseModel):
+    chat_id: str
+
+
+@app.post("/api/chat")
+async def create_chat() -> CreateChatResponse:
+    return CreateChatResponse(chat_id=str(uuid.uuid4()))
