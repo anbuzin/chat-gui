@@ -44,3 +44,6 @@ next-env.d.ts
 __pycache__
 .venv
 .ruff_cache
+
+# cursor
+.cursor

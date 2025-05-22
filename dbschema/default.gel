@@ -9,11 +9,16 @@ module default {
     }
 
     type Message {
-        llm_role: str;
+        required llm_role: str;
         content: str;
-        created_at: datetime {
+        required created_at: datetime {
             default:= datetime_current();
         };
+        is_evicted: bool {
+            default:= false;
+        };
+
+        chat := .<archive[is Chat];
 
         trigger post_foo after insert, update for each do (
             with 
@@ -39,5 +44,17 @@ module default {
                 )
             )
         );
+    }
+
+    type Chat {
+        required title: str {
+            default:= "New Chat";
+        };
+        required created_at: datetime {
+            default:= datetime_current();
+        };
+
+        multi archive: Message;
+        multi history := (select .archive filter not .is_evicted);
     }
 }
