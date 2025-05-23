@@ -8,36 +8,74 @@ module default {
         default:= "";
     }
 
+    type ToolInvocation {
+        required state: str;
+        required tool_call_id: str;
+        required tool_name: str;
+        required args: json;
+        result: json;
+    }
+
+    type Part {
+        required message: Message;
+        required type_: str;
+        text: str;
+        reasoning: str;
+        tool_invocation: ToolInvocation;
+        source_: str;
+    }
+
     type Message {
-        llm_role: str;
-        content: str;
+        required chat: Chat;
+        required role_: str;
         created_at: datetime {
             default:= datetime_current();
         };
+        content: str;
+        annotations: json;
 
-        trigger post_foo after insert, update for each do (
-            with 
-                endpoint := assert_exists(global backend_url) ++ "/api/agent/foo",
-                headers := [
-                    ('x-vercel-protection-bypass', assert_exists(global vercel_bypass)),
-                    ('Content-Type', 'application/json')
-                ],
-            select net::http::schedule_request(
-                endpoint,
-                method := net::http::Method.POST,
-                headers := headers,
-                body := to_bytes(
-                    to_str(
-                        json_object_pack(
-                            {
-                                ("chat_id", <json>__new__.id),
-                                ("content", <json>__new__.content),
-                                ("llm_role", <json>__new__.llm_role)
-                            }
-                        )
-                    )
-                )
-            )
-        );
+        multi parts := .<message[is Part];
+
+        is_evicted: bool {
+            default:= false;
+        };
+    }
+
+    type Chat {
+        required title: str {
+            default:= "New Chat";
+        };
+        required created_at: datetime {
+            default:= datetime_current();
+        };
+
+        multi archive := .<chat[is Message];
+        multi history := (select .archive filter not .is_evicted);
+
+
+        # trigger post_foo after insert, update for each do (
+        #     with 
+        #         endpoint := assert_exists(global backend_url) ++ "/api/agent/foo",
+        #         headers := [
+        #             ('x-vercel-protection-bypass', assert_exists(global vercel_bypass)),
+        #             ('Content-Type', 'application/json')
+        #         ],
+        #     select net::http::schedule_request(
+        #         endpoint,
+        #         method := net::http::Method.POST,
+        #         headers := headers,
+        #         body := to_bytes(
+        #             to_str(
+        #                 json_object_pack(
+        #                     {
+        #                         ("chat_id", <json>__new__.id),
+        #                         ("content", <json>__new__.content),
+        #                         ("llm_role", <json>__new__.role_)
+        #                     }
+        #                 )
+        #             )
+        #         )
+        #     )
+        # );
     }
 }

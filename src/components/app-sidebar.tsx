@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Sidebar,
   SidebarContent,
@@ -10,10 +12,24 @@ import {
   SidebarMenuButton,
 } from "@/components/ui/sidebar";
 import Link from "next/link";
-import { mockChats } from "@/app/mock-chats";
 import { Button } from "./ui/button";
+import { useState, useEffect } from "react";
+
+interface ChatInfo {
+  id: string;
+  title: string;
+  createdAt: string;
+}
 
 export function AppSidebar() {
+  const [chats, setChats] = useState<ChatInfo[]>([]);
+
+  useEffect(() => {
+    fetch("/api/chat")
+      .then((res) => res.json())
+      .then((data) => setChats(data.chats));
+  }, []);
+
   return (
     <Sidebar>
       <SidebarContent>
@@ -28,15 +44,21 @@ export function AppSidebar() {
           <SidebarGroupLabel>Today</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {mockChats.map((item) => (
-                <SidebarMenuItem key={item.id}>
-                  <SidebarMenuButton asChild>
-                    <Link href={`/chat/${item.id}`}>
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              {chats
+                .sort(
+                  (a, b) =>
+                    new Date(b.createdAt).getTime() -
+                    new Date(a.createdAt).getTime()
+                )
+                .map((item) => (
+                  <SidebarMenuItem key={item.id}>
+                    <SidebarMenuButton asChild>
+                      <Link href={`/chat/${item.id}`}>
+                        <span>{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
