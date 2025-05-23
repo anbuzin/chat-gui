@@ -7,7 +7,12 @@ import uuid
 from pydantic import BaseModel
 import gel
 from common.types import Message, ChatInfo, Chat, Part, UIMessage
-from queries.chat_api import SELECT_CHAT_BY_ID, INSERT_MESSAGE, SELECT_CHAT_INFOS
+from queries.chat_api import (
+    SELECT_CHAT_BY_ID,
+    INSERT_MESSAGE,
+    SELECT_CHAT_INFOS,
+    INSERT_CHAT,
+)
 
 DEPLOYMENT_URL = f"https://{os.getenv('VERCEL_URL')}" or "http://localhost:3000"
 VERCEL_BYPASS = os.getenv("VERCEL_AUTOMATION_BYPASS_SECRET") or ""
@@ -111,5 +116,5 @@ class CreateChatResponse(BaseModel):
 
 @app.post("/api/chat")
 async def create_chat() -> CreateChatResponse:
-    result_set = await gel_client.query("insert Chat {};")
+    result_set = await gel_client.query(INSERT_CHAT)
     return CreateChatResponse(chat_id=result_set[0].id)

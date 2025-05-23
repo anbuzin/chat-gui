@@ -96,3 +96,12 @@ with
     )
 select message {{MESSAGE_SHAPE}};
 """).render(MESSAGE_SHAPE=MESSAGE_SHAPE)
+
+INSERT_CHAT = """
+with
+    chat_count := (select count(Chat)),
+    title := "Chat " ++ <str>chat_count,
+insert Chat {
+    title := title,
+}
+"""
