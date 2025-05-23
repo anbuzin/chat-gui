@@ -71,21 +71,26 @@ with
     parts_json := <optional json>$parts,
     parts := (
         for part_item in json_array_unpack(parts_json ?? <json>[]) union (
+            with
+                tool_invocation_json := json_get(part_item, 'tool_invocation'),
+                tool_invocation := (
+                    (insert ToolInvocation {
+                        state := <str>tool_invocation_json['state'],
+                        tool_call_id := <str>tool_invocation_json['tool_call_id'],
+                        tool_name := <str>tool_invocation_json['tool_name'],
+                        args := <json>tool_invocation_json['args'],
+                        result := <optional json>tool_invocation_json['result'],
+                    }) if exists tool_invocation_json 
+                    and exists json_get(tool_invocation_json, 'state')
+                    else {}
+                )
             insert Part {
                 message := message,
                 type_ := <str>part_item['type'],
                 text := <optional str>part_item['text'],
                 reasoning := <optional str>part_item['reasoning'],
                 source_ := <optional str>part_item['source'],
-                # tool_invocation := (
-                #     (insert ToolInvocation {
-                #         state := <str>part_item['tool_invocation']['state'],
-                #         tool_call_id := <str>part_item['tool_invocation']['tool_call_id'],
-                #         tool_name := <str>part_item['tool_invocation']['tool_name'],
-                #         args := <json>part_item['tool_invocation']['args'],
-                #         result := <optional json>part_item['tool_invocation']['result'],
-                #     }) if exists json_get(part_item, 'tool_invocation') else {}
-                # )
+                tool_invocation := tool_invocation,
             }
         )
     )
