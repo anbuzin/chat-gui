@@ -1,21 +1,48 @@
 "use client";
 
-import { useChat } from "@ai-sdk/react";
+import { use, useEffect, useState } from "react";
+import { Message, useChat } from "@ai-sdk/react";
 import { cn } from "@/lib/utils";
 import Markdown from "react-markdown";
 import reactGfm from "remark-gfm";
 import { Input } from "@/components/ui/input";
 
-export default async function ChatPage({
+export default function ChatPage({
   params,
 }: {
   params: Promise<{ chatId: string }>;
 }) {
-  const { chatId } = await params;
+  const [initialMessages, setInitialMessages] = useState<Message[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const { chatId } = use(params);
+
+  useEffect(() => {
+    const fetchMessages = async () => {
+      try {
+        const response = await fetch("/api/chat/" + chatId);
+        const data = await response.json();
+        setInitialMessages(data.messages);
+        setIsLoading(false);
+      } catch (error) {
+        console.error("Error fetching messages:", error);
+        setIsLoading(false);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchMessages();
+  }, [chatId]);
+
   const { messages, input, handleInputChange, handleSubmit } = useChat({
     api: "/api/chat/" + chatId,
     id: chatId,
+    initialMessages: initialMessages,
   });
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
   return (
     <>
       <div className="w-full">
@@ -24,13 +51,13 @@ export default async function ChatPage({
             const isUser = message.role === "user";
             return (
               <div
+                key={message.id}
                 className={cn(
                   "w-full flex",
                   isUser ? "justify-end" : "justify-start"
                 )}
               >
                 <div
-                  key={message.id}
                   className={cn(
                     "flex flex-col prose p-4",
                     isUser
@@ -42,7 +69,10 @@ export default async function ChatPage({
                     switch (part.type) {
                       case "text":
                         return (
-                          <Markdown remarkPlugins={[reactGfm]}>
+                          <Markdown
+                            key={message.id + "-" + i}
+                            remarkPlugins={[reactGfm]}
+                          >
                             {part.text}
                           </Markdown>
                         );

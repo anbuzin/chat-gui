@@ -4,9 +4,10 @@ from fastapi.middleware.cors import CORSMiddleware
 import asyncio
 import os
 import uuid
+from datetime import datetime
 from pydantic import BaseModel
 import gel
-from common.types import Message, ChatInfo
+from common.types import Message, ChatInfo, Chat, Part
 
 
 DEPLOYMENT_URL = f"https://{os.getenv('VERCEL_URL')}" or "http://localhost:3000"
@@ -29,6 +30,9 @@ app.add_middleware(
 )
 
 
+MOCK_CHATS: dict[uuid.UUID, Chat] = {}
+
+
 class FooRequest(BaseModel):
     chat_id: str
     content: str
@@ -46,7 +50,9 @@ class FetchChatResponse(BaseModel):
 
 @app.get("/api/chat/{chat_id}")
 async def fetch_chat(chat_id: uuid.UUID) -> FetchChatResponse:
-    return FetchChatResponse(messages=[])
+    print("Fetching chat", chat_id)
+    print(MOCK_CHATS[chat_id].history)
+    return FetchChatResponse(messages=[m.to_nextjs_ui_message() for m in MOCK_CHATS[chat_id].history])
 
 
 class ListChatsResponse(BaseModel):
@@ -55,7 +61,9 @@ class ListChatsResponse(BaseModel):
 
 @app.get("/api/chat")
 async def list_chats() -> ListChatsResponse:
-    return ListChatsResponse(chats=[])
+    return ListChatsResponse(
+        chats=[chat.to_chat_info() for chat in MOCK_CHATS.values()]
+    )
 
 
 class AddMessageRequest(BaseModel):
@@ -66,12 +74,31 @@ class AddMessageRequest(BaseModel):
 async def add_message(
     chat_id: uuid.UUID, request: AddMessageRequest
 ) -> StreamingResponse:
+    new_message = request.messages[-1]
+    new_message.id_ = uuid.uuid4()
+    MOCK_CHATS[chat_id].history.append(new_message)
+
     async def generate_stream():
-        for message in request.messages:
-            words = message.content.split()
-            for i, word in enumerate(words):
-                yield f'0:"{word} "\n'
-                await asyncio.sleep(0.1)
+        full_message = ""
+        words = ["echo "] + new_message.content.split()
+        for i, word in enumerate(words):
+            full_message += word + " "
+            yield f'0:"{full_message} "\n'
+            await asyncio.sleep(0.1)
+
+        MOCK_CHATS[chat_id].history.append(
+            Message(
+                id_=uuid.uuid4(),
+                role="assistant",
+                content=full_message,
+                parts=[
+                    Part(
+                        type="text",
+                        text=full_message,
+                    )
+                ],
+            )
+        )
 
         yield 'e:{{"finishReason":"stop","usage":{{"promptTokens":15,"completionTokens":25}},"isContinued":false}}\n'
 
@@ -80,10 +107,26 @@ async def add_message(
     return response
 
 
+class CreateChatRequest(BaseModel):
+    first_message: Message
+
+
 class CreateChatResponse(BaseModel):
-    chat_id: str
+    chat_id: uuid.UUID
 
 
 @app.post("/api/chat")
-async def create_chat() -> CreateChatResponse:
-    return CreateChatResponse(chat_id=str(uuid.uuid4()))
+async def create_chat(request: CreateChatRequest) -> CreateChatResponse:
+    chat_id = uuid.uuid4()
+    if not request.first_message.id_:
+        request.first_message.id_ = uuid.uuid4()
+
+    print("Creating chat", chat_id)
+    MOCK_CHATS[chat_id] = Chat(
+        id_=chat_id,
+        title="New Chat",
+        created_at=datetime.now(),
+        history=[request.first_message],
+        archive=[],
+    )
+    return CreateChatResponse(chat_id=chat_id)

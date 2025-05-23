@@ -13,7 +13,7 @@ class ToolInvocation(BaseModel):
 
 
 class Part(BaseModel):
-    type_: Literal["text", "reasoning", "tool_invocation", "source", "step_start"]
+    type: Literal["text", "reasoning", "tool_invocation", "source", "step_start"]
     text: Optional[str] = None
     reasoning: Optional[str] = None
     tool_invocation: Optional[ToolInvocation] = None
@@ -23,7 +23,7 @@ class Part(BaseModel):
     def from_nextjs_part(cls, part_data: dict) -> "Part":
         part_type = part_data["type"]
 
-        part = cls(type_=part_type)
+        part = cls(type=part_type)
 
         match part_type:
             case "text":
@@ -67,9 +67,9 @@ class Part(BaseModel):
 
 
 class Message(BaseModel):
-    id_: uuid.UUID
+    id_: uuid.UUID | None = None
     role: Literal["system", "user", "assistant", "data"]
-    created_at: datetime
+    created_at: datetime | None = None
     content: str | None = None
     annotations: dict = Field(default_factory=dict)
     parts: list[Part] = Field(default_factory=list)
