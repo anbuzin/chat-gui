@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 import asyncio
@@ -18,10 +18,12 @@ DEPLOYMENT_URL = f"https://{os.getenv('VERCEL_URL')}" or "http://localhost:3000"
 VERCEL_BYPASS = os.getenv("VERCEL_AUTOMATION_BYPASS_SECRET") or ""
 
 
-gel_base_client = gel.create_async_client()
-gel_client = gel_base_client.with_globals(
-    {"backend_url": f"{DEPLOYMENT_URL}", "vercel_bypass": f"{VERCEL_BYPASS}"}
-)
+async def get_gel_client():
+    """Dependency to create a fresh Gel client for each request"""
+    base_client = gel.create_async_client()
+    return base_client.with_globals(
+        {"backend_url": f"{DEPLOYMENT_URL}", "vercel_bypass": f"{VERCEL_BYPASS}"}
+    )
 
 
 app = FastAPI()
@@ -51,7 +53,7 @@ class FetchChatResponse(BaseModel):
 
 
 @app.get("/api/chat/{chat_id}")
-async def fetch_chat(chat_id: uuid.UUID) -> FetchChatResponse:
+async def fetch_chat(chat_id: uuid.UUID, gel_client = Depends(get_gel_client)) -> FetchChatResponse:
     result_set = await gel_client.query(SELECT_CHAT_BY_ID, chat_id=chat_id)
     chat = Chat.from_gel_query_result(result_set[0])
     return FetchChatResponse(messages=[m.to_nextjs_ui_message() for m in chat.archive])
@@ -62,7 +64,7 @@ class ListChatsResponse(BaseModel):
 
 
 @app.get("/api/chat")
-async def list_chats() -> ListChatsResponse:
+async def list_chats(gel_client = Depends(get_gel_client)) -> ListChatsResponse:
     result_set = await gel_client.query(SELECT_CHAT_INFOS)
     return ListChatsResponse(
         chats=[ChatInfo.from_gel_query_result(result) for result in result_set]
@@ -75,7 +77,7 @@ class AddMessageRequest(BaseModel):
 
 @app.post("/api/chat/{chat_id}")
 async def add_message(
-    chat_id: uuid.UUID, request: AddMessageRequest
+    chat_id: uuid.UUID, request: AddMessageRequest, gel_client = Depends(get_gel_client)
 ) -> StreamingResponse:
     user_message = Message.from_nextjs_ui_message(request.messages[-1], skip_id=True)
     await gel_client.query(
@@ -115,6 +117,6 @@ class CreateChatResponse(BaseModel):
 
 
 @app.post("/api/chat")
-async def create_chat() -> CreateChatResponse:
+async def create_chat(gel_client = Depends(get_gel_client)) -> CreateChatResponse:
     result_set = await gel_client.query(INSERT_CHAT)
     return CreateChatResponse(chat_id=result_set[0].id)
