@@ -6,8 +6,8 @@ import os
 import uuid
 from pydantic import BaseModel
 import gel
-from common.types import Message, ChatInfo, Chat, Part, UIMessage
-from queries.chat_api import (
+from api.common.types import Message, ChatInfo, Chat, Part, UIMessage
+from api.queries.chat_api import (
     SELECT_CHAT_BY_ID,
     INSERT_MESSAGE,
     SELECT_CHAT_INFOS,
