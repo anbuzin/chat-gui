@@ -142,16 +142,16 @@ class Message(BaseModel):
 
 
 class ChatInfo(BaseModel):
-    id_: uuid.UUID
+    id: uuid.UUID
     title: str
-    created_at: datetime
+    createdAt: datetime
 
     @classmethod
     def from_gel_query_result(cls, raw_result: gel.Object) -> "ChatInfo":
         return cls(
-            id_=raw_result.id,
+            id=raw_result.id,
             title=raw_result.title,
-            created_at=raw_result.created_at,
+            createdAt=raw_result.created_at,
         )
 
 
