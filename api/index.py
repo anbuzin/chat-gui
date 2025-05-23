@@ -7,7 +7,7 @@ import uuid
 from datetime import datetime
 from pydantic import BaseModel
 import gel
-from common.types import Message, ChatInfo, Chat, Part
+from common.types import Message, ChatInfo, Chat, Part, UIMessage
 
 
 DEPLOYMENT_URL = f"https://{os.getenv('VERCEL_URL')}" or "http://localhost:3000"
@@ -45,14 +45,14 @@ async def foo(request: FooRequest):
 
 
 class FetchChatResponse(BaseModel):
-    messages: list[Message]
+    messages: list[UIMessage]
 
 
 @app.get("/api/chat/{chat_id}")
 async def fetch_chat(chat_id: uuid.UUID) -> FetchChatResponse:
-    print("Fetching chat", chat_id)
-    print(MOCK_CHATS[chat_id].history)
-    return FetchChatResponse(messages=[m.to_nextjs_ui_message() for m in MOCK_CHATS[chat_id].history])
+    return FetchChatResponse(
+        messages=[m.to_nextjs_ui_message() for m in MOCK_CHATS[chat_id].history]
+    )
 
 
 class ListChatsResponse(BaseModel):
@@ -67,7 +67,7 @@ async def list_chats() -> ListChatsResponse:
 
 
 class AddMessageRequest(BaseModel):
-    messages: list[Message]
+    messages: list[UIMessage]
 
 
 @app.post("/api/chat/{chat_id}")
@@ -75,15 +75,15 @@ async def add_message(
     chat_id: uuid.UUID, request: AddMessageRequest
 ) -> StreamingResponse:
     new_message = request.messages[-1]
-    new_message.id_ = uuid.uuid4()
-    MOCK_CHATS[chat_id].history.append(new_message)
+    new_message.id = str(uuid.uuid4())
+    MOCK_CHATS[chat_id].history.append(Message.from_nextjs_ui_message(new_message))
 
     async def generate_stream():
         full_message = ""
         words = ["echo "] + new_message.content.split()
         for i, word in enumerate(words):
             full_message += word + " "
-            yield f'0:"{full_message} "\n'
+            yield f'0:"{word} "\n'
             await asyncio.sleep(0.1)
 
         MOCK_CHATS[chat_id].history.append(
@@ -107,26 +107,17 @@ async def add_message(
     return response
 
 
-class CreateChatRequest(BaseModel):
-    first_message: Message
-
-
 class CreateChatResponse(BaseModel):
     chat_id: uuid.UUID
 
 
 @app.post("/api/chat")
-async def create_chat(request: CreateChatRequest) -> CreateChatResponse:
+async def create_chat() -> CreateChatResponse:
     chat_id = uuid.uuid4()
-    if not request.first_message.id_:
-        request.first_message.id_ = uuid.uuid4()
 
-    print("Creating chat", chat_id)
     MOCK_CHATS[chat_id] = Chat(
         id_=chat_id,
         title="New Chat",
         created_at=datetime.now(),
-        history=[request.first_message],
-        archive=[],
     )
     return CreateChatResponse(chat_id=chat_id)

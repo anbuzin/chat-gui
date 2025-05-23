@@ -16,28 +16,33 @@ export default function ChatPage({
   const [isLoading, setIsLoading] = useState(true);
   const { chatId } = use(params);
 
+  const { messages, append, input, handleInputChange, handleSubmit } = useChat({
+    api: "/api/chat/" + chatId,
+    id: chatId,
+    initialMessages: initialMessages,
+    sendExtraMessageFields: true,
+  });
+
   useEffect(() => {
+    const firstMessage = sessionStorage.getItem("firstMessage");
+    if (firstMessage) {
+      sessionStorage.removeItem("firstMessage");
+      append({ role: "user", content: firstMessage });
+    }
+
     const fetchMessages = async () => {
       try {
         const response = await fetch("/api/chat/" + chatId);
         const data = await response.json();
         setInitialMessages(data.messages);
-        setIsLoading(false);
       } catch (error) {
         console.error("Error fetching messages:", error);
-        setIsLoading(false);
       } finally {
         setIsLoading(false);
       }
     };
     fetchMessages();
-  }, [chatId]);
-
-  const { messages, input, handleInputChange, handleSubmit } = useChat({
-    api: "/api/chat/" + chatId,
-    id: chatId,
-    initialMessages: initialMessages,
-  });
+  }, [chatId, append]);
 
   if (isLoading) {
     return <div>Loading...</div>;

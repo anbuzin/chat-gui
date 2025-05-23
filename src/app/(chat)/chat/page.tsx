@@ -9,14 +9,13 @@ export default function NewChat() {
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
+    sessionStorage.setItem("firstMessage", input);
+
     const response = await fetch("/api/chat", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        first_message: { role: "user", content: input },
-      }),
     });
 
     if (!response.ok) {

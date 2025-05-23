@@ -20,50 +20,20 @@ class Part(BaseModel):
     source: Optional[str] = None
 
     @classmethod
-    def from_nextjs_part(cls, part_data: dict) -> "Part":
-        part_type = part_data["type"]
-
-        part = cls(type=part_type)
-
-        match part_type:
-            case "text":
-                part.text = part_data["text"]
-            case "reasoning":
-                part.reasoning = part_data["reasoning"]
-            case "tool_invocation":
-                part.tool_invocation = ToolInvocation(**part_data["tool_invocation"])
-            case "source":
-                part.source = part_data["source"]
-            case "step_start":
-                pass
-            case _:
-                raise ValueError(f"Unknown part type: {part_type}")
-
-        return part
-
-    def to_nextjs_part(self) -> dict:
-        result = {"type": self.type_}
-
-        match self.type_:
-            case "text":
-                result["text"] = self.text
-            case "reasoning":
-                result["reasoning"] = self.reasoning
-            case "tool_invocation":
-                result["tool_invocation"] = self.tool_invocation.model_dump()
-            case "source":
-                result["source"] = self.source
-            case "step_start":
-                pass
-
-        return result
-
-    @classmethod
     def from_pydantic_ai_part(cls, raw_part: dict) -> "Part":
         raise NotImplementedError
 
     def to_pydantic_ai_part(self) -> dict:
         raise NotImplementedError
+
+
+class UIMessage(BaseModel):
+    id: str
+    role: Literal["system", "user", "assistant", "data"]
+    createdAt: datetime | None = None
+    content: str | None = None
+    annotations: dict = Field(default_factory=dict)
+    parts: list[Part] = Field(default_factory=list)
 
 
 class Message(BaseModel):
@@ -75,29 +45,25 @@ class Message(BaseModel):
     parts: list[Part] = Field(default_factory=list)
 
     @classmethod
-    def from_nextjs_ui_message(cls, raw_message: dict) -> "Message":
-        assert "parts" in raw_message, "Expected parts in raw Next.js UIMessage"
-
-        parts = [Part.from_nextjs_part(part) for part in raw_message["parts"]]
-
+    def from_nextjs_ui_message(cls, ui_message: UIMessage) -> "Message":
         return cls(
-            id_=raw_message["id"],
-            role=raw_message["role"],
-            created_at=raw_message["created_at"],
-            content=raw_message["content"],
-            annotations=raw_message["annotations"],
-            parts=parts,
+            id_=ui_message.id,
+            role=ui_message.role,
+            created_at=ui_message.createdAt,
+            content=ui_message.content,
+            annotations=ui_message.annotations,
+            parts=ui_message.parts,
         )
 
-    def to_nextjs_ui_message(self) -> dict:
-        return {
-            "id": self.id_,
-            "role": self.role,
-            "created_at": self.created_at,
-            "content": self.content,
-            "annotations": self.annotations,
-            "parts": [part.to_nextjs_part() for part in self.parts],
-        }
+    def to_nextjs_ui_message(self) -> UIMessage:
+        return UIMessage(
+            id=str(self.id_),
+            role=self.role,
+            createdAt=self.created_at,
+            content=self.content,
+            annotations=self.annotations,
+            parts=self.parts,
+        )
 
     @classmethod
     def from_pydantic_ai_message(cls, raw_message: dict) -> "Message":
@@ -117,8 +83,8 @@ class Chat(BaseModel):
     id_: uuid.UUID
     title: str
     created_at: datetime
-    history: list[Message]
-    archive: list[Message]
+    history: list[Message] = Field(default_factory=list)
+    archive: list[Message] = Field(default_factory=list)
 
     def to_chat_info(self) -> ChatInfo:
         return ChatInfo(
