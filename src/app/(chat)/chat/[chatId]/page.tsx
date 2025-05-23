@@ -18,7 +18,6 @@ export default function ChatPage({
 
   const { messages, append, input, handleInputChange, handleSubmit } = useChat({
     api: "/api/chat/" + chatId,
-    id: chatId,
     initialMessages: initialMessages,
     sendExtraMessageFields: true,
   });
