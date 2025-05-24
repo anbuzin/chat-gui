@@ -32,15 +32,15 @@ export function AppSidebar() {
 
   return (
     <Sidebar>
-      <SidebarContent>
-        <SidebarHeader>
+      <SidebarContent className="p-2 overflow-y-hidden">
+        <SidebarHeader className="mt-8">
           <Link href="/chat">
             <Button className="w-full" variant="outline" size="sm">
               New Chat
             </Button>
           </Link>
         </SidebarHeader>
-        <SidebarGroup>
+        <SidebarGroup className="overflow-y-auto">
           <SidebarGroupLabel>Today</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
@@ -52,8 +52,8 @@ export function AppSidebar() {
                 )
                 .map((item) => (
                   <SidebarMenuItem key={item.id}>
-                    <SidebarMenuButton asChild>
-                      <Link href={`/chat/${item.id}`}>
+                    <SidebarMenuButton asChild >
+                      <Link href={`/chat/${item.id}`} className="text-sm p-1">
                         <span>{item.title}</span>
                       </Link>
                     </SidebarMenuButton>
