@@ -1,6 +1,6 @@
 import { Input } from "./ui/input";
 
-export default function ChatInput( {
+export default function ChatInput({
   handleSubmit,
   handleInputChange,
   input,
@@ -10,17 +10,17 @@ export default function ChatInput( {
   input: string;
 }) {
   return (
-    <div className="sticky bottom-0">
+    <div className="sticky bottom-2">
       <div className="max-w-3xl mx-auto mb-2">
-        <div className="bg-black/5 backdrop-blur-md p-1 rounded-md">
+        <div className="border border-black/5 backdrop-blur-md p-1 rounded-md">
           <div className="bg-background/75 backdrop-blur-lg p-2 rounded-sm">
-          <form onSubmit={handleSubmit}>
-            <Input
-              value={input}
-              onChange={handleInputChange}
-              placeholder="Type a message..."
-              className="bg-transparent border-none outline-none focus-visible:border-none focus-visible:ring-0 shadow-none"
-            />
+            <form onSubmit={handleSubmit}>
+              <Input
+                value={input}
+                onChange={handleInputChange}
+                placeholder="Type a message..."
+                className="bg-transparent border-none outline-none focus-visible:border-none focus-visible:ring-0 shadow-none"
+              />
             </form>
           </div>
         </div>

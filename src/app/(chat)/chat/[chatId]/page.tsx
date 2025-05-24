@@ -47,12 +47,10 @@ export default function ChatPage({
 
   return (
     <>
-      <div className="flex-1 overflow-y-auto px-4">
-        <div className="flex flex-col gap-4 w-full max-w-3xl mx-auto py-4">
-          {messages.map((message) => {
-            return <MessageItem key={message.id} message={message} />;
-          })}
-        </div>
+      <div className="flex flex-col flex-1 py-4 gap-4 w-full max-w-3xl mx-auto">
+        {messages.map((message) => {
+          return <MessageItem key={message.id} message={message} />;
+        })}
       </div>
       <ChatInput
         handleSubmit={handleSubmit}
