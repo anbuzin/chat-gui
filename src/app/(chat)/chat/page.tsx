@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { redirect } from "next/navigation";
+import ChatInput from "@/components/chat-input";
 
 export default function NewChat() {
   const [input, setInput] = useState("");
@@ -27,13 +28,10 @@ export default function NewChat() {
     redirect("/chat/" + chatId);
   }
   return (
-    <form onSubmit={handleSubmit}>
-      <input
-        className="fixed dark:bg-zinc-900 bottom-0 w-full max-w-md p-2 mb-8 border border-zinc-300 dark:border-zinc-800 rounded shadow-xl"
-        value={input}
-        placeholder="Say something..."
-        onChange={(e) => setInput(e.target.value)}
-      />
-    </form>
+    <ChatInput
+      handleSubmit={handleSubmit}
+      handleInputChange={(e) => setInput(e.target.value)}
+      input={input}
+    />
   );
 }

@@ -12,7 +12,7 @@ export type Message = {
   thinking?: string;
 };
 
-export function MessageContainer({ message }: { message: Message }) {
+export function MessageItem({ message }: { message: Message }) {
   const isUser = message.llm_role === "user";
   return (
     <div
