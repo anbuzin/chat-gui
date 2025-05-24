@@ -2,10 +2,8 @@
 
 import { use, useEffect, useState } from "react";
 import { Message, useChat } from "@ai-sdk/react";
-import { cn } from "@/lib/utils";
-import Markdown from "react-markdown";
-import reactGfm from "remark-gfm";
 import ChatInput from "@/components/chat-input";
+import { MessageItem } from "@/components/message-item";
 
 export default function ChatPage({
   params,
@@ -52,39 +50,7 @@ export default function ChatPage({
       <div className="w-full">
         <div className="overflow-y-auto flex flex-col gap-4 w-full max-w-3xl mx-auto px-4">
           {messages.map((message) => {
-            const isUser = message.role === "user";
-            return (
-              <div
-                key={message.id}
-                className={cn(
-                  "w-full flex",
-                  isUser ? "justify-end" : "justify-start"
-                )}
-              >
-                <div
-                  className={cn(
-                    "flex flex-col prose p-4",
-                    isUser
-                      ? "bg-primary text-primary-foreground rounded-md"
-                      : "bg-none text-secondary-foreground w-full max-w-none"
-                  )}
-                >
-                  {message.parts.map((part, i) => {
-                    switch (part.type) {
-                      case "text":
-                        return (
-                          <Markdown
-                            key={message.id + "-" + i}
-                            remarkPlugins={[reactGfm]}
-                          >
-                            {part.text}
-                          </Markdown>
-                        );
-                    }
-                  })}
-                </div>
-              </div>
-            );
+            return <MessageItem key={message.id} message={message} />;
           })}
         </div>
       </div>

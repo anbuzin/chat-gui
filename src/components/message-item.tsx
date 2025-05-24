@@ -1,25 +1,15 @@
 import Markdown from "react-markdown";
 import reactGfm from "remark-gfm";
 import { cn } from "@/lib/utils";
-
-export type Message = {
-  id: string;
-  llm_role: string;
-  body: string;
-  created_at: string;
-  chatId: string;
-  evicted?: boolean;
-  thinking?: string;
-};
+import { Message } from "@ai-sdk/react";
 
 export function MessageItem({ message }: { message: Message }) {
-  const isUser = message.llm_role === "user";
+  const isUser = message.role === "user";
   return (
     <div
       className={cn("w-full flex", isUser ? "justify-end" : "justify-start")}
     >
       <div
-        key={message.id}
         className={cn(
           "flex flex-col prose p-4",
           isUser
@@ -27,7 +17,16 @@ export function MessageItem({ message }: { message: Message }) {
             : "bg-none text-secondary-foreground w-full max-w-none"
         )}
       >
-        <Markdown remarkPlugins={[reactGfm]}>{message.body}</Markdown>
+        {(message.parts ?? []).map((part, i) => {
+          switch (part.type) {
+            case "text":
+              return (
+                <Markdown key={message.id + "-" + i} remarkPlugins={[reactGfm]}>
+                  {part.text}
+                </Markdown>
+              );
+          }
+        })}
       </div>
     </div>
   );
