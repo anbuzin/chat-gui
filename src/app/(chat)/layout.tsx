@@ -10,8 +10,10 @@ export default function ChatLayout({
     <SidebarProvider>
       <AppSidebar />
       <SidebarTrigger className="fixed top-0 left-0 z-50" />
-      <main className="flex flex-col h-screen w-full bg-background">
-        {children}
+      <main className="w-full h-screen flex flex-col">
+        <div className="flex-1 overflow-hidden flex flex-col">
+          {children}
+        </div>
       </main>
     </SidebarProvider>
   );

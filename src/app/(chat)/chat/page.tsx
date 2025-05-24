@@ -28,10 +28,13 @@ export default function NewChat() {
     redirect("/chat/" + chatId);
   }
   return (
-    <ChatInput
-      handleSubmit={handleSubmit}
-      handleInputChange={(e) => setInput(e.target.value)}
-      input={input}
-    />
+    <>
+      <div className="flex-1"></div>
+      <ChatInput
+        handleSubmit={handleSubmit}
+        handleInputChange={(e) => setInput(e.target.value)}
+        input={input}
+      />
+    </>
   );
 }
