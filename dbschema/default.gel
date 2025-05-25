@@ -1,3 +1,5 @@
+using extension auth;
+
 module default {
 
     global backend_url: str {
