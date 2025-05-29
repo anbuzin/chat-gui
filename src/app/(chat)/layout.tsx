@@ -1,11 +1,26 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
+import { redirect } from "next/navigation";
+import { auth } from "@/lib/auth";
 
-export default function ChatLayout({
+
+export default async function ChatLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+
+  const { isSignedIn } = await auth.getSession();
+
+  const isReallySignedIn = await isSignedIn();
+
+  console.log(isReallySignedIn);
+
+  if (!isReallySignedIn) {
+    redirect(auth.getBuiltinUIUrl());
+  }
+
+
   return (
     <SidebarProvider>
       <AppSidebar />
