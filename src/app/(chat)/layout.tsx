@@ -3,23 +3,16 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 
-
 export default async function ChatLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const session = await auth.getSession();
 
-  const { isSignedIn } = await auth.getSession();
-
-  const isReallySignedIn = await isSignedIn();
-
-  console.log(isReallySignedIn);
-
-  if (!isReallySignedIn) {
+  if (!(await session.isSignedIn())) {
     redirect(auth.getBuiltinUIUrl());
   }
-
 
   return (
     <SidebarProvider>
