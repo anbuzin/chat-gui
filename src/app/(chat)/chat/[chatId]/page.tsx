@@ -4,6 +4,7 @@ import { use, useEffect, useState } from "react";
 import { Message, useChat } from "@ai-sdk/react";
 import ChatInput from "@/components/chat-input";
 import { MessageItem } from "@/components/message-item";
+import { useAuth } from "@/components/auth-provider";
 
 export default function ChatPage({
   params,
@@ -12,12 +13,17 @@ export default function ChatPage({
 }) {
   const [initialMessages, setInitialMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { authToken } = useAuth();
   const { chatId } = use(params);
 
   const { messages, append, input, handleInputChange, handleSubmit } = useChat({
     api: "/api/chat/" + chatId,
     initialMessages: initialMessages,
     sendExtraMessageFields: true,
+    credentials: "same-origin",
+    headers: {
+      "gel-auth-token": authToken,
+    },
   });
 
   useEffect(() => {
