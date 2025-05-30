@@ -1,4 +1,5 @@
-from fastapi import FastAPI, Depends
+from typing import Annotated
+from fastapi import FastAPI, Depends, Header
 from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 import asyncio
@@ -18,7 +19,7 @@ DEPLOYMENT_URL = f"https://{os.getenv('VERCEL_URL')}" or "http://localhost:3000"
 VERCEL_BYPASS = os.getenv("VERCEL_AUTOMATION_BYPASS_SECRET") or ""
 
 
-async def get_gel_client():
+async def get_gel_client() -> gel.AsyncIOClient:
     """Dependency to create a fresh Gel client for each request"""
     base_client = gel.create_async_client()
     return base_client.with_globals(
@@ -53,8 +54,15 @@ class FetchChatResponse(BaseModel):
 
 
 @app.get("/api/chat/{chat_id}")
-async def fetch_chat(chat_id: uuid.UUID, gel_client = Depends(get_gel_client)) -> FetchChatResponse:
-    result_set = await gel_client.query(SELECT_CHAT_BY_ID, chat_id=chat_id)
+async def fetch_chat(
+    chat_id: uuid.UUID,
+    gel_client=Depends(get_gel_client),
+    gel_auth_token: Annotated[str, Header()] = None,
+) -> FetchChatResponse:
+    gel_auth_client = gel_client.with_globals(
+        {"ext::auth::client_token": gel_auth_token}
+    )
+    result_set = await gel_auth_client.query(SELECT_CHAT_BY_ID, chat_id=chat_id)
     chat = Chat.from_gel_query_result(result_set[0])
     return FetchChatResponse(messages=[m.to_nextjs_ui_message() for m in chat.archive])
 
@@ -64,8 +72,13 @@ class ListChatsResponse(BaseModel):
 
 
 @app.get("/api/chat")
-async def list_chats(gel_client = Depends(get_gel_client)) -> ListChatsResponse:
-    result_set = await gel_client.query(SELECT_CHAT_INFOS)
+async def list_chats(
+    gel_client=Depends(get_gel_client), gel_auth_token: Annotated[str, Header()] = None
+) -> ListChatsResponse:
+    gel_auth_client = gel_client.with_globals(
+        {"ext::auth::client_token": gel_auth_token}
+    )
+    result_set = await gel_auth_client.query(SELECT_CHAT_INFOS)
     return ListChatsResponse(
         chats=[ChatInfo.from_gel_query_result(result) for result in result_set]
     )
@@ -77,10 +90,16 @@ class AddMessageRequest(BaseModel):
 
 @app.post("/api/chat/{chat_id}")
 async def add_message(
-    chat_id: uuid.UUID, request: AddMessageRequest, gel_client = Depends(get_gel_client)
+    chat_id: uuid.UUID,
+    request: AddMessageRequest,
+    gel_client=Depends(get_gel_client),
+    gel_auth_token: Annotated[str, Header()] = None,
 ) -> StreamingResponse:
+    gel_auth_client = gel_client.with_globals(
+        {"ext::auth::client_token": gel_auth_token}
+    )
     user_message = Message.from_nextjs_ui_message(request.messages[-1], skip_id=True)
-    await gel_client.query(
+    await gel_auth_client.query(
         INSERT_MESSAGE, chat_id=chat_id, **user_message.to_gel_query_params()
     )
 
@@ -102,7 +121,7 @@ async def add_message(
                 )
             ],
         )
-        await gel_client.query(
+        await gel_auth_client.query(
             INSERT_MESSAGE, chat_id=chat_id, **ai_message.to_gel_query_params()
         )
         yield 'e:{{"finishReason":"stop","usage":{{"promptTokens":15,"completionTokens":25}},"isContinued":false}}\n'
@@ -117,6 +136,11 @@ class CreateChatResponse(BaseModel):
 
 
 @app.post("/api/chat")
-async def create_chat(gel_client = Depends(get_gel_client)) -> CreateChatResponse:
-    result_set = await gel_client.query(INSERT_CHAT)
+async def create_chat(
+    gel_client=Depends(get_gel_client), gel_auth_token: Annotated[str, Header()] = None
+) -> CreateChatResponse:
+    gel_auth_client = gel_client.with_globals(
+        {"ext::auth::client_token": gel_auth_token}
+    )
+    result_set = await gel_auth_client.query(INSERT_CHAT)
     return CreateChatResponse(chat_id=result_set[0].id)
