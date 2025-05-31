@@ -1,4 +1,12 @@
+using extension auth;
+
 module default {
+    global current_user := (
+        assert_single((
+            select User
+            filter .identity = global ext::auth::ClientTokenIdentity
+        ))
+    );
 
     global backend_url: str {
         default:= "http://localhost:8000";
@@ -14,6 +22,12 @@ module default {
         required tool_name: str;
         required args: json;
         result: json;
+
+        part := .<tool_invocation[is Part];
+
+        access policy owner_has_full_access
+            allow all
+        using (assert_single(.part).message.chat.owner ?= global current_user);
     }
 
     type Part {
@@ -23,6 +37,10 @@ module default {
         reasoning: str;
         tool_invocation: ToolInvocation;
         source_: str;
+
+        access policy owner_has_full_access
+            allow all
+        using (.message.chat.owner ?= global current_user);
     }
 
     type Message {
@@ -39,6 +57,10 @@ module default {
         is_evicted: bool {
             default:= false;
         };
+
+        access policy owner_has_full_access
+            allow all
+        using (.chat.owner ?= global current_user);
     }
 
     type Chat {
@@ -51,6 +73,12 @@ module default {
 
         multi archive := .<chat[is Message];
         multi history := (select .archive filter not .is_evicted);
+
+        required owner: User;
+
+        access policy owner_has_full_access
+            allow all
+        using (.owner ?= global current_user);
 
 
         # trigger post_foo after insert, update for each do (
@@ -77,5 +105,9 @@ module default {
         #         )
         #     )
         # );
+    }
+
+    type User {
+        required identity: ext::auth::Identity;
     }
 }

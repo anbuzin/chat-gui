@@ -48,11 +48,13 @@ filter .id = <uuid>$chat_id
 
 
 SELECT_CHAT_INFOS = """
+with
+    user := assert_exists(global current_user),
 select Chat {
     id,
     title,
     created_at,
-}
+} filter .owner = user
 """
 
 
@@ -99,9 +101,11 @@ select message {{MESSAGE_SHAPE}};
 
 INSERT_CHAT = """
 with
+    user := assert_exists(global current_user),
     chat_count := (select count(Chat)),
     title := "Chat " ++ <str>chat_count,
 insert Chat {
     title := title,
+    owner := user,
 }
 """
