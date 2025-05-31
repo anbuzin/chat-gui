@@ -1,5 +1,5 @@
 from typing import Annotated
-from fastapi import FastAPI, Depends, Header
+from fastapi import FastAPI, Depends, Cookie
 from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 import asyncio
@@ -57,7 +57,7 @@ class FetchChatResponse(BaseModel):
 async def fetch_chat(
     chat_id: uuid.UUID,
     gel_client=Depends(get_gel_client),
-    gel_auth_token: Annotated[str, Header()] = None,
+    gel_auth_token: Annotated[str, Cookie()] = None,
 ) -> FetchChatResponse:
     gel_auth_client = gel_client.with_globals(
         {"ext::auth::client_token": gel_auth_token}
@@ -73,7 +73,7 @@ class ListChatsResponse(BaseModel):
 
 @app.get("/api/chat")
 async def list_chats(
-    gel_client=Depends(get_gel_client), gel_auth_token: Annotated[str, Header()] = None
+    gel_client=Depends(get_gel_client), gel_auth_token: Annotated[str, Cookie()] = None
 ) -> ListChatsResponse:
     gel_auth_client = gel_client.with_globals(
         {"ext::auth::client_token": gel_auth_token}
@@ -93,7 +93,7 @@ async def add_message(
     chat_id: uuid.UUID,
     request: AddMessageRequest,
     gel_client=Depends(get_gel_client),
-    gel_auth_token: Annotated[str, Header()] = None,
+    gel_auth_token: Annotated[str, Cookie()] = None,
 ) -> StreamingResponse:
     gel_auth_client = gel_client.with_globals(
         {"ext::auth::client_token": gel_auth_token}
@@ -137,7 +137,7 @@ class CreateChatResponse(BaseModel):
 
 @app.post("/api/chat")
 async def create_chat(
-    gel_client=Depends(get_gel_client), gel_auth_token: Annotated[str, Header()] = None
+    gel_client=Depends(get_gel_client), gel_auth_token: Annotated[str, Cookie()] = None
 ) -> CreateChatResponse:
     gel_auth_client = gel_client.with_globals(
         {"ext::auth::client_token": gel_auth_token}
