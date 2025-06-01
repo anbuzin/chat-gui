@@ -59,6 +59,8 @@ async def fetch_chat(
     gel_client=Depends(get_gel_client),
     gel_auth_token: Annotated[str, Cookie()] = None,
 ) -> FetchChatResponse:
+    assert gel_auth_token is not None, "You're supposed to have a cookie with a token by now"
+    
     gel_auth_client = gel_client.with_globals(
         {"ext::auth::client_token": gel_auth_token}
     )
@@ -75,6 +77,8 @@ class ListChatsResponse(BaseModel):
 async def list_chats(
     gel_client=Depends(get_gel_client), gel_auth_token: Annotated[str, Cookie()] = None
 ) -> ListChatsResponse:
+    assert gel_auth_token is not None, "You're supposed to have a cookie with a token by now"
+    
     gel_auth_client = gel_client.with_globals(
         {"ext::auth::client_token": gel_auth_token}
     )
@@ -95,6 +99,8 @@ async def add_message(
     gel_client=Depends(get_gel_client),
     gel_auth_token: Annotated[str, Cookie()] = None,
 ) -> StreamingResponse:
+    assert gel_auth_token is not None, "You're supposed to have a cookie with a token by now"
+    
     gel_auth_client = gel_client.with_globals(
         {"ext::auth::client_token": gel_auth_token}
     )
@@ -139,6 +145,8 @@ class CreateChatResponse(BaseModel):
 async def create_chat(
     gel_client=Depends(get_gel_client), gel_auth_token: Annotated[str, Cookie()] = None
 ) -> CreateChatResponse:
+    assert gel_auth_token is not None, "You're supposed to have a cookie with a token by now"
+    
     gel_auth_client = gel_client.with_globals(
         {"ext::auth::client_token": gel_auth_token}
     )
